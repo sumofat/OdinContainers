@@ -141,6 +141,14 @@ anycache_add :: proc(cache : ^AnyCache($key_type,$value_type),key : key_type,thi
     return r;
 }
 
+
+anycache_get :: proc(cache : ^AnyCache($key_type,$value_type),key : key_type) -> value_type{
+    ptr := hash_get_ptr(&cache.hash,key);
+    index := ptr^;
+    result := buf_get(&cache.anythings, index);
+    return result
+}
+
 anycache_get_ptr :: proc(cache : ^AnyCache($key_type,$value_type),key : key_type) -> ^value_type
 {
     ptr := hash_get_ptr(&cache.hash,key);
