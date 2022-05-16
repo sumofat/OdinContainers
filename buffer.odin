@@ -57,6 +57,12 @@ buf_get_nb :: proc(buffer : ^Buffer($element_type),index : u64,$type : typeid) -
     return buffer.buffer[index];
 }
 
+buf_peek :: proc(buffer : ^Buffer($element_type)) -> (element_type){
+	result : element_type
+	result = buf_get(buffer,buf_len(buffer^) - 1)
+	return result
+}
+
 buf_pop :: proc(buffer : ^Buffer($element_type)) -> (element_type)
 {
     assert(buffer != nil);
@@ -171,6 +177,14 @@ buf_copy_slice :: proc(s : []$element_type)-> Buffer(element_type){
     resize(&result.buffer,len(s));
     copy(result.buffer[:],s[:]);        
     return result;
+}
+
+buf_get_slice :: proc(buf : ^Buffer($element_type))-> []element_type{
+	return buf.buffer[:]
+}
+
+buf_get_slice_of_type :: proc(buf : ^Buffer($element_type),$new_type : typeid )-> []new_type{
+	return mem.slice_data_cast([]new_type,buf.buffer[:])
 }
 
 clone_dynamic_array :: proc(x: $T/[dynamic]$E) -> T
