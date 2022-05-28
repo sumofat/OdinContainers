@@ -10,12 +10,14 @@ Buffer :: struct (type : typeid)
     buffer : [dynamic]type,
     current_id : u64,
     borrow_count : u64,
+	is_init : bool,
 }
 
 buf_init :: proc(capacity : u64,$type : typeid) -> (Buffer(type))
 {
     result : Buffer(type);
     result.buffer = make([dynamic]type,0,capacity);
+	result.is_init = true
     return result;
 }
 
@@ -150,6 +152,7 @@ buf_free :: proc(b : ^Buffer($element_type))
     assert(b != nil);
     delete(b.buffer);
     b.borrow_count = 0;
+	b.is_init = false
 }
 
 buf_copy :: proc(buf : ^Buffer($element_type),copy_contents : bool  = false) -> Buffer(element_type)
