@@ -3,7 +3,7 @@ package containers;
 import "core:fmt"
 import "core:c"
 import "core:mem"
-
+import "core:hash"
 Hash :: struct (key_type,value_type : typeid)
 {
     
@@ -70,6 +70,9 @@ hash_remove :: proc(cache : ^Hash($key_type,$value_type),key : key_type)
     delete_key(&cache.hash,key);
 }
 
+hash_get_from_string :: proc(s : string)-> u64{
+    return u64(hash.murmur64(transmute([]u8)s))
+}
 //BEGIN ANYTHING CACHE
 AnyCache :: struct (key_type,value_type : typeid)
 {
