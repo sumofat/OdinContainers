@@ -25,6 +25,7 @@ buf_push :: proc(buffer : ^Buffer($element_type),element : element_type) -> u64
 {
     assert(buffer != nil);
     assert(buffer.borrow_count == 0);
+	assert(buffer.is_init == true)
     if buf_len(buffer^) <= buffer.current_id
     {
 	   append_nothing(&buffer.buffer);
@@ -40,6 +41,7 @@ buf_push :: proc(buffer : ^Buffer($element_type),element : element_type) -> u64
 buf_insert :: proc(buffer : ^Buffer($element_type),at : u64,element : element_type) -> bool{
     assert(buffer != nil)
     assert(buffer.borrow_count == 0)
+	assert(buffer.is_init == true)
     ok : bool
     if ok = insert_at(&buffer.buffer,int(at),element);ok{
         buffer.current_id += 1
@@ -50,16 +52,19 @@ buf_insert :: proc(buffer : ^Buffer($element_type),at : u64,element : element_ty
 buf_get :: proc(buffer : ^Buffer($element_type),index : u64) -> (element_type)
 {
     assert(buffer != nil);
+	assert(buffer.is_init == true)
     return buffer.buffer[index];
 }
 
 buf_get_nb :: proc(buffer : ^Buffer($element_type),index : u64,$type : typeid) -> (type)// #no_bounds_check
 {
     assert(buffer != nil);
+	assert(buffer.is_init == true)
     return buffer.buffer[index];
 }
 
 buf_peek :: proc(buffer : ^Buffer($element_type)) -> (element_type){
+	assert(buffer.is_init == true)
 	result : element_type
 	result = buf_get(buffer,buf_len(buffer^) - 1)
 	return result
@@ -68,6 +73,7 @@ buf_peek :: proc(buffer : ^Buffer($element_type)) -> (element_type){
 buf_pop :: proc(buffer : ^Buffer($element_type)) -> (element_type)
 {
     assert(buffer != nil);
+	assert(buffer.is_init == true)
     //should reduce length by 1 and remove the top element
     return pop(&buffer.buffer);
 }
@@ -76,6 +82,7 @@ buf_pop :: proc(buffer : ^Buffer($element_type)) -> (element_type)
 buf_chk_out :: proc(buffer : ^Buffer($element_type),index : u64) -> (^element_type)
 {
     assert(buffer != nil);
+	assert(buffer.is_init == true)
     if (len(buffer.buffer) == 0)
     { 
         return nil;   
@@ -90,6 +97,7 @@ buf_chk_out :: proc(buffer : ^Buffer($element_type),index : u64) -> (^element_ty
 buf_ptr :: proc(buffer : ^Buffer($element_type),index : u64) -> (^element_type)
 {
     assert(buffer != nil);
+	assert(buffer.is_init == true)
     if (len(buffer.buffer) == 0)
     { 
         return nil;   
@@ -99,13 +107,15 @@ buf_ptr :: proc(buffer : ^Buffer($element_type),index : u64) -> (^element_type)
 
 buf_len :: proc(buf : Buffer($element_type)) -> u64
 {
-    return cast(u64)len(buf.buffer);
+	assert(buf.is_init == true)
+    return cast(u64)len(buf.buffer)
 }
 
 //NOTE(Ray):If somone tries to push an element while a ptr is checked out should assert
 //Call this when your done with checkout ptr.
 buf_chk_in :: proc(buffer : ^Buffer($element_type))
 {
+	assert(buffer.is_init == true)
     if buffer.borrow_count > 0
     {
 	   buffer.borrow_count -= 1;	
@@ -115,6 +125,7 @@ buf_chk_in :: proc(buffer : ^Buffer($element_type))
 buf_swap :: proc(buffer : ^Buffer($element_type), a_idx : u64,b_idx : u64)-> bool{
     assert(buffer != nil)
     assert(buffer.borrow_count == 0);
+	assert(buffer.is_init == true)
 
     if (len(buffer.buffer) == 0){ 
         return false
@@ -134,6 +145,7 @@ buf_swap :: proc(buffer : ^Buffer($element_type), a_idx : u64,b_idx : u64)-> boo
 buf_del :: proc(buffer : ^Buffer($element_type),idx : u64) -> bool{
     assert(buffer != nil)
     assert(buffer.borrow_count == 0)
+	assert(buffer.is_init == true)
 
     if (len(buffer.buffer) == 0){ 
         return false
@@ -141,12 +153,14 @@ buf_del :: proc(buffer : ^Buffer($element_type),idx : u64) -> bool{
         return false
     }
     runtime.unordered_remove(&buffer.buffer,int(idx))
+	buffer.is_init = false
     buffer.current_id -= 1
     return true
 }
 
 buf_clear :: proc(b : ^Buffer($element_type))
 {
+	assert(b.is_init == true)
     assert(b != nil);
     clear(&b.buffer);
     b.current_id = 0;
@@ -155,6 +169,7 @@ buf_clear :: proc(b : ^Buffer($element_type))
 
 buf_free :: proc(b : ^Buffer($element_type))
 {
+	assert(b.is_init == true)
     assert(b != nil);
     delete(b.buffer);
     b.borrow_count = 0;
@@ -163,8 +178,10 @@ buf_free :: proc(b : ^Buffer($element_type))
 
 buf_copy :: proc(buf : ^Buffer($element_type),copy_contents : bool  = false) -> Buffer(element_type)
 {
+	assert(buf.is_init == true)
     assert(buf != nil);
     result : Buffer(element_type);
+	result.is_init = true
     result.current_id = buf.current_id;
     result.borrow_count = buf.borrow_count;
     //    result.buffer = clone_dynamic_array(buf.buffer);
@@ -175,6 +192,7 @@ buf_copy :: proc(buf : ^Buffer($element_type),copy_contents : bool  = false) -> 
 
 buf_copy_slice :: proc(s : []$element_type)-> Buffer(element_type){
     result : Buffer(element_type);
+	result.is_init = true
     result.current_id = 0
     result.borrow_count = 0
     resize(&result.buffer,len(s));
@@ -183,10 +201,12 @@ buf_copy_slice :: proc(s : []$element_type)-> Buffer(element_type){
 }
 
 buf_get_slice :: proc(buf : ^Buffer($element_type))-> []element_type{
+	assert(buf.is_init == true)
 	return buf.buffer[:]
 }
 
 buf_get_slice_of_type :: proc(buf : ^Buffer($element_type),$new_type : typeid )-> []new_type{
+	assert(buf.is_init == true)
 	return mem.slice_data_cast([]new_type,buf.buffer[:])
 }
 

@@ -120,9 +120,9 @@ anycache_add_to_free_list :: proc(cache : ^AnyCache($key_type,$value_type),key :
         mi := buf_get(&cache.free_list,buf_len(cache.free_list) - 1);
         index := mi;
         dst := buf_chk_out(&cache.anythings,index);
-	//        fmj_memory_copy(dst,thing,cache->anythings.fixed.unit_size);
-	thing_copy := thing;
-	mem.copy(dst,&thing_copy,size_of(value_type));	
+    //        fmj_memory_copy(dst,thing,cache->anythings.fixed.unit_size);
+    thing_copy := thing;
+    mem.copy(dst,&thing_copy,size_of(value_type));  
         buf_chk_in(&cache.anythings);
         buf_pop(&cache.free_list);
     }
@@ -143,7 +143,6 @@ anycache_add :: proc(cache : ^AnyCache($key_type,$value_type),key : key_type,thi
     r := hash_add(&cache.hash,key,index);
     return r;
 }
-
 
 anycache_get :: proc(cache : ^AnyCache($key_type,$value_type),key : key_type) -> value_type{
     ptr := hash_get_ptr(&cache.hash,key);
@@ -175,33 +174,31 @@ anycache_checkin :: proc(cache : ^AnyCache($key_type,$value_type))
     buf_chk_in(&cache.anythings);
 }
 
-anycache_remove_free_list :: proc(cache : ^AnyCache($key_type,$value_type),key : key_type) 
-{
-    assert(cache.is_using_free_list != false);
+anycache_remove_free_list :: proc(cache : ^AnyCache($key_type,$value_type),key : key_type) {
+    assert(cache.is_using_free_list == true);
     index := hash_get(&cache.hash,key);
     buf_push(&cache.free_list,index);
     hash_remove(&cache.hash,key);
 }
 
-anycache_remove :: proc(cache : AnyCache($key_type,$value_type),key : key_type)
-{
-    assert(cache.is_using_free_list != false);
-    hash_remove(&cache.hash,key);
+anycache_remove :: proc(cache : AnyCache($key_type,$value_type),key : key_type){
+    assert(cache.is_using_free_list == false)
+    hash_remove(&cache.hash,key)
 }
 
-anycache_chk_out_first_free :: proc(cache : ^AnyCache($key_type,$value_type)) -> ^key_type
-{
-    result : ^key_type = nil;
-    if buf_len(cache.free_list) > 0
-    {
-        mi := buf_chk_out(&cache.free_list,buf_len(cache.free_list) - 1);
-        assert(mi != nil);
-        index := mi^;
-        buf_chk_in(&cache.free_list);
+anycache_chk_out_first_free :: proc(cache : ^AnyCache($key_type,$value_type)) -> ^value_type{
+    assert(cache.is_using_free_list == true)
+    result : ^value_type = nil
+    if buf_len(cache.free_list) > 0{
+        mi := buf_chk_out(&cache.free_list,buf_len(cache.free_list) - 1)
+        assert(mi != nil)
+        index := mi^
+        buf_chk_in(&cache.free_list)
 
         //checked out
-        result := buf_chk_out(&cache.anythings,index);
-        buf_pop(&cache.free_list);
+        result = buf_chk_out(&cache.anythings,index)
+        buf_pop(&cache.free_list)
+        assert(result != nil)
     }
     return result;
 }
